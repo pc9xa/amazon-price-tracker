@@ -1,0 +1,136 @@
+import sqlite3
+import streamlit as st
+from scraper import Scraper
+from PIL import Image
+from io import BytesIO
+
+# - Constants -------------------------------------------------------------------
+DEBUG_MODE = True
+
+# - Initialize ------------------------------------------------------------------
+# - Session state
+if "preview_image" not in st.session_state:
+    st.session_state["preview_image"] = ""
+
+if "tracking_counter" not in st.session_state:
+    st.session_state["tracking_counter"] = 0
+
+# - Scraper
+sc = Scraper()
+
+# - Database
+sc.init_db()
+
+# - Callbacks -------------------------------------------------------------------
+def preview_product():
+    if product_link.startswith("https://www.amazon.com/"):
+        png_bytes = sc.get_product_screenshot(product_link)
+        st.session_state["preview_image"] = Image.open(BytesIO(png_bytes))
+    else:
+        st.error('Something is wrong. Did you enter a link from Amazon? '
+                 'Please make sure that the link starts with "https://www.amazon.com/"')
+
+def save_product(save_product_link):
+    with st.spinner("Adding product to list...", show_time=False):
+        try:
+            sc.save_product(save_product_link)
+        except sqlite3.Error as e:
+            st.error(f"There was an error in saving this product for monitoring: ({e})")
+        else:
+            st.session_state.product_link_k = ""
+
+def check_product_limit():
+    st.session_state["tracking_counter"] = sc.get_product_list_size()
+
+# - UI --------------------------------------------------------------------------
+st.header("Amazon Price Tracker")
+st.divider()
+
+# - Enter product link
+enter_product_c1, enter_product_c2 = st.columns([8.25, 1.25])
+with enter_product_c1:
+    product_link = st.text_input(
+        label="Amazon product link",
+        placeholder="https://www.amazon.com/...",
+        key="product_link_k",
+    )
+with enter_product_c2:
+    st.space("small")
+    enter_button = st.button(
+        label="Enter",
+        key="enter_button_k",
+        width="stretch",
+        disabled=st.session_state["tracking_counter"] >= 5
+    )
+
+if st.session_state["tracking_counter"] >= 5:
+    st.caption(
+        "*You've hit the maximum number of products to monitor.\n"
+        "Delete a product from the list below to monitor another product.*"
+    )
+else:
+    st.caption(
+        "*You can monitor the price of up to 5 products from Amazon.*"
+    )
+
+# - Product preview
+if enter_button:
+    with st.spinner("Checking product...", show_time=False):
+        preview_product()
+        with st.container(
+                border=True,
+                key="product_preview_k",
+                height="stretch",
+        ):
+            st.text("Preview:")
+            st.image(st.session_state["preview_image"])
+
+        monitoring_button = st.button(
+            label="Start monitoring this product",
+            key="monitor_button_k",
+            width="stretch",
+            on_click=save_product,
+            args=(product_link,),
+        )
+
+# - Product price monitoring interface
+st.divider()
+st.subheader(f"Tracked products ({st.session_state["tracking_counter"]}):")
+
+#TODO: Add handling if no products saved
+all_products = sc.load_all_tracked_products()
+if not all_products:
+    st.caption("You are not monitoring the price of any product at the moment. "
+               "Use the field above to start monitoring prices!")
+else:
+    for i, product in enumerate(all_products):
+        with st.container(
+          border=True,
+        ):
+            df = sc.load_product_info(product)
+            st.text(product)
+            st.bar_chart(df, x="timestamp", y="price")
+            tracked_product_c1, tracked_product_c2 = st.columns([7, 3])
+            with tracked_product_c2:
+                del_button = st.button(
+                    label="Stop monitoring",
+                    key=f"stop_button_k_{i}",
+                    width="stretch",
+                )
+                if del_button:
+                    sc.del_one_product(product)
+                    st.rerun()
+
+#TODO: Timed fetching of price
+
+# - Limit monitored products to 5 (at every page refresh)
+check_product_limit()
+
+# - Footer
+st.space("large")
+st.caption("by Patricia Ysabel Canencia, © 2026")
+
+# - DEBUG CODE
+if DEBUG_MODE:
+    st.divider()
+    "Session state: ", st.session_state
