@@ -1,4 +1,3 @@
-import sqlite3
 import streamlit as st
 from scraper import Scraper
 from PIL import Image
@@ -31,12 +30,9 @@ def preview_product():
                  'Please make sure that the link starts with "https://www.amazon.com/"')
 
 def save_product(save_product_link):
-    with st.spinner("Adding product to list...", show_time=False):
+    with st.spinner(text="Adding product to list...", show_time=False):
         sc.save_product(save_product_link)
         st.session_state.product_link_k = ""
-
-def check_product_limit():
-    st.session_state["tracking_counter"] = sc.get_product_list_size()
 
 # - UI --------------------------------------------------------------------------
 st.header("Amazon Price Tracker")
@@ -59,6 +55,8 @@ with enter_product_c2:
         disabled=st.session_state["tracking_counter"] >= 5
     )
 
+# - Limit monitored products to 5 at a time
+st.session_state["tracking_counter"] = sc.get_product_list_size()
 if st.session_state["tracking_counter"] >= 5:
     st.caption(
         "*You've hit the maximum number of products to monitor.\n"
@@ -71,7 +69,7 @@ else:
 
 # - Product preview
 if enter_button:
-    with st.spinner("Checking product...", show_time=False):
+    with st.spinner(text="Checking product...", show_time=False):
         preview_product()
         with st.container(
                 border=True,
@@ -117,13 +115,11 @@ else:
                     width="stretch",
                 )
                 if del_button:
-                    sc.del_one_product(product)
-                    st.rerun()
+                    with st.spinner(text="Removing this product from the monitor list...", show_time=False):
+                        sc.del_one_product(product)
+                        st.rerun()
 
 #TODO: Timed fetching of price
-
-# - Limit monitored products to 5 (at every page refresh)
-check_product_limit()
 
 # - Footer
 st.space("large")

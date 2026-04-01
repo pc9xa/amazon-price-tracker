@@ -62,3 +62,4 @@ def del_product(product):
             text("DELETE FROM prices WHERE product_name = :product"),
             {"product": product},
         )
+        conn.commit()
