@@ -37,4 +37,6 @@ Features and structure may change over time.
 <ul>
   <li>Automated/ scheduled price checks</li>
   <li>E-mail notification feature</li>
+  <li>Deploy Streamlit app (non-local)
+  <li>Migrate local DB to Supabase or others (under consideration)</li>
 </ul>
