@@ -5,7 +5,7 @@ from PIL import Image
 from io import BytesIO
 
 # - Constants -------------------------------------------------------------------
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # - Initialize ------------------------------------------------------------------
 # - Session state
@@ -99,7 +99,10 @@ st.subheader(f"Tracked products ({st.session_state["tracking_counter"]}):")
 
 #TODO: Add handling if no products saved
 all_products = sc.load_all_tracked_products()
-if not all_products:
+if isinstance(all_products, str):
+    # Error message was returned instead of a list
+    st.error(all_products)
+elif not all_products:
     st.caption("You are not monitoring the price of any product at the moment. "
                "Use the field above to start monitoring prices!")
 else:
@@ -128,6 +131,7 @@ check_product_limit()
 
 # - Footer
 st.space("large")
+st.divider()
 st.caption("by Patricia Ysabel Canencia, © 2026")
 
 # - DEBUG CODE

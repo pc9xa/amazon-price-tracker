@@ -63,7 +63,10 @@ class Scraper:
 
     @staticmethod
     def get_product_list_size():
-        return len(db.load_tracked_products())
+        product_list = db.load_tracked_products()
+        if isinstance(product_list, list):
+            return len(product_list)
+        return 0
 
     @staticmethod
     def load_product_info(product):

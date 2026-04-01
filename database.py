@@ -1,6 +1,7 @@
 import os
 import pandas as pds
 from dotenv import load_dotenv
+from pandas.errors import DatabaseError
 from sqlalchemy import create_engine, text
 
 # - Initialize -------------------------------------------------------------------
@@ -22,6 +23,7 @@ def init_db():
                 timestamp TEXT
             )
         """))
+        conn.commit()
 
 def save_price(product, price, timestamp):
     with get_connection() as conn:
@@ -35,14 +37,19 @@ def save_price(product, price, timestamp):
 def load_tracked_products():
     with get_connection() as conn:
         query = "SELECT DISTINCT product_name FROM prices"
-        df = pds.read_sql(query, conn)
-        return df["product_name"].to_list()
+
+        try:
+            df = pds.read_sql(query, conn)
+        except DatabaseError as e:
+            return f"Error occurred while loading the monitored products:\n {e}"
+        else:
+            return df["product_name"].to_list()
 
 def load_product_prices(product):
     with get_connection() as conn:
         query = text("""
             SELECT * FROM prices
-            WHERE product_name = ?            
+            WHERE product_name = :product            
             ORDER BY timestamp DESC
         """)
 
@@ -52,6 +59,6 @@ def load_product_prices(product):
 def del_product(product):
     with get_connection() as conn:
         conn.execute(
-            text("DELETE FROM prices WHERE product_name = ?"),
+            text("DELETE FROM prices WHERE product_name = :product"),
             {"product": product},
         )
