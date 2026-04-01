@@ -1,28 +1,33 @@
-import sqlite3
+import os
 import pandas as pds
-from pathlib import Path
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
 
-DB_PATH = Path("data/prices.db")
+# - Initialize -------------------------------------------------------------------
+# - Local environment only
+load_dotenv()
+DB_PATH = os.getenv("DATABASE_PATH")
 
+# - Database communication -------------------------------------------------------
 def get_connection():
-    return sqlite3.connect(DB_PATH, timeout=20)
+    return create_engine(DB_PATH).connect()
 
 def init_db():
     with get_connection() as conn:
-        conn.execute("""
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS prices (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 product_name TEXT,
                 price REAL,
                 timestamp TEXT
             )
-        """)
+        """))
 
 def save_price(product, price, timestamp):
     with get_connection() as conn:
         conn.execute(
-            "INSERT INTO prices (product_name, price, timestamp) VALUES (?, ?, ?)",
-            (product, price, timestamp)
+            text("INSERT INTO prices (product_name, price, timestamp) VALUES (:product, :price, :timestamp)"),
+            {"product": product, "price": price, "timestamp": timestamp}
         )
 
         conn.commit()
@@ -31,23 +36,22 @@ def load_tracked_products():
     with get_connection() as conn:
         query = "SELECT DISTINCT product_name FROM prices"
         df = pds.read_sql(query, conn)
-        product_list = df["product_name"].to_list()
-        return product_list
+        return df["product_name"].to_list()
 
 def load_product_prices(product):
     with get_connection() as conn:
-        query = """
+        query = text("""
             SELECT * FROM prices
             WHERE product_name = ?            
             ORDER BY timestamp DESC
-        """
+        """)
 
-        df = pds.read_sql(query, conn, params=(product,))
+        df = pds.read_sql(query, conn, params={"product": product})
         return df
 
 def del_product(product):
     with get_connection() as conn:
         conn.execute(
-            "DELETE FROM prices WHERE product_name = ?",
-            (product,),
+            text("DELETE FROM prices WHERE product_name = ?"),
+            {"product": product},
         )
