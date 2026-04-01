@@ -32,12 +32,8 @@ def preview_product():
 
 def save_product(save_product_link):
     with st.spinner("Adding product to list...", show_time=False):
-        try:
-            sc.save_product(save_product_link)
-        except sqlite3.Error as e:
-            st.error(f"There was an error in saving this product for monitoring: ({e})")
-        else:
-            st.session_state.product_link_k = ""
+        sc.save_product(save_product_link)
+        st.session_state.product_link_k = ""
 
 def check_product_limit():
     st.session_state["tracking_counter"] = sc.get_product_list_size()
