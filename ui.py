@@ -4,7 +4,7 @@ from PIL import Image
 from io import BytesIO
 
 # - Constants -------------------------------------------------------------------
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 # - Initialize ------------------------------------------------------------------
 # - Session state
@@ -130,3 +130,10 @@ st.caption("by Patricia Ysabel Canencia, © 2026")
 if DEBUG_MODE:
     st.divider()
     "Session state: ", st.session_state
+
+    sim_btn = st.button(
+       label="Simulate Scheduled Price Scrape",
+    )
+
+    if sim_btn:
+        sc.get_monitored_product_prices()

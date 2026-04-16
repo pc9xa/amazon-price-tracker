@@ -9,12 +9,13 @@ from selenium.webdriver.support import expected_conditions as EC
 class Scraper:
     def __init__(self):
         self.chrome_options = webdriver.ChromeOptions()
-        self.chrome_options.add_argument("--headless=new")  # The magic line to hide the window
-        self.chrome_options.add_argument("--disable-gpu")  # Recommended for headless performance
+        #self.chrome_options.add_argument("--headless=new")
+        #self.chrome_options.add_argument("--disable-gpu")  # For headless performance
         self.chrome_options.add_argument("--window-size=1920,1080")  # Set a size so the layout stays consistent
         self.chrome_options.add_argument(f"--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36")
         self.chrome_options.add_argument("--profile-directory=Default")
         self.driver = None
+        self.wait = None
 
     def start_driver(self):
         self.driver = webdriver.Chrome(options=self.chrome_options)
@@ -56,6 +57,14 @@ class Scraper:
         db.save_price(product_name, product_url, product_price, timestamp)
 
         self.driver.quit()
+
+    def get_monitored_product_prices(self):
+        # Load references to product links
+        product_link_list = db.load_tracked_product_links()
+        for product_link in product_link_list:
+            self.start_driver()
+            self.driver.get(product_link)
+            # TODO: when driver.get, opens another window. need to wait to scrape for first product before open another window
 
     @staticmethod
     def load_all_tracked_products():

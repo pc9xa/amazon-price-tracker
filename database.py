@@ -46,6 +46,17 @@ def load_tracked_products():
         else:
             return df["product_name"].to_list()
 
+def load_tracked_product_links():
+    with get_connection() as conn:
+        query = "SELECT DISTINCT product_link FROM prices"
+
+        try:
+            df = pds.read_sql(query, conn)
+        except DatabaseError as e:
+            return f"Error occurred while loading the monitored product links:\n {e}"
+        else:
+            return df["product_link"].to_list()
+
 def load_product_prices(product):
     with get_connection() as conn:
         query = text("""
