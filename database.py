@@ -29,7 +29,7 @@ def init_db():
 def save_price(product, product_link, price, timestamp):
     with get_connection() as conn:
         conn.execute(
-            text("INSERT INTO prices (product_name, product_link, price, timestamp) VALUES (:product, :price, :timestamp)"),
+            text("INSERT INTO prices (product_name, product_link, price, timestamp) VALUES (:product, :product_link, :price, :timestamp)"),
             {"product": product, "product_link": product_link, "price": price, "timestamp": timestamp}
         )
 
