@@ -19,6 +19,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS prices (
                 id SERIAL PRIMARY KEY,
                 product_name TEXT,
+                product_link TEXT,
                 price REAL,
                 timestamp TEXT
             )
