@@ -53,7 +53,7 @@ class Scraper:
         timestamp = local.format()
 
         # Save product info to DB
-        db.save_price(product_name, product_price, timestamp)
+        db.save_price(product_name, product_url, product_price, timestamp)
 
         self.driver.quit()
 

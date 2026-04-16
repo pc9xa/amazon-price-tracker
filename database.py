@@ -26,11 +26,11 @@ def init_db():
         """))
         conn.commit()
 
-def save_price(product, price, timestamp):
+def save_price(product, product_link, price, timestamp):
     with get_connection() as conn:
         conn.execute(
-            text("INSERT INTO prices (product_name, price, timestamp) VALUES (:product, :price, :timestamp)"),
-            {"product": product, "price": price, "timestamp": timestamp}
+            text("INSERT INTO prices (product_name, product_link, price, timestamp) VALUES (:product, :price, :timestamp)"),
+            {"product": product, "product_link": product_link, "price": price, "timestamp": timestamp}
         )
 
         conn.commit()
