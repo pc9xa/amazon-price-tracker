@@ -136,4 +136,5 @@ if DEBUG_MODE:
     )
 
     if sim_btn:
-        sc.get_monitored_product_prices()
+        sc.scrape_product_prices()
+        st.rerun()

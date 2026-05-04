@@ -58,13 +58,27 @@ class Scraper:
 
         self.driver.quit()
 
-    def get_monitored_product_prices(self):
+    def scrape_product_prices(self):
         # Load references to product links
         product_link_list = db.load_tracked_product_links()
+
         for product_link in product_link_list:
             self.start_driver()
             self.driver.get(product_link)
-            # TODO: when driver.get, opens another window. need to wait to scrape for first product before open another window
+            product_name = self.driver.find_element(By.CSS_SELECTOR, 'span#productTitle').text
+            product_price_whole = self.driver.find_element(By.CSS_SELECTOR, 'span.a-price-whole').text
+            product_price_fraction = self.driver.find_element(By.CSS_SELECTOR, 'span.a-price-fraction').text
+            product_price = product_price_whole.replace(',', '') + '.' + product_price_fraction
+
+            # Get time now
+            local = arrow.utcnow().to('Asia/Manila')
+            timestamp = local.format()
+
+            # Save product info to DB
+            db.save_price(product_name, product_link, product_price, timestamp)
+
+            self.driver.quit()
+
 
     @staticmethod
     def load_all_tracked_products():
