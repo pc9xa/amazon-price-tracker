@@ -1,7 +1,7 @@
 import arrow
 import database as db
 from selenium import webdriver
-from selenium.common import TimeoutException
+from selenium.common import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -9,8 +9,8 @@ from selenium.webdriver.support import expected_conditions as EC
 class Scraper:
     def __init__(self):
         self.chrome_options = webdriver.ChromeOptions()
-        #self.chrome_options.add_argument("--headless=new")
-        #self.chrome_options.add_argument("--disable-gpu")  # For headless performance
+        self.chrome_options.add_argument("--headless=new")
+        self.chrome_options.add_argument("--disable-gpu")  # For headless performance
         self.chrome_options.add_argument("--window-size=1920,1080")  # Set a size so the layout stays consistent
         self.chrome_options.add_argument(f"--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36")
         self.chrome_options.add_argument("--profile-directory=Default")
@@ -19,7 +19,7 @@ class Scraper:
 
     def start_driver(self):
         self.driver = webdriver.Chrome(options=self.chrome_options)
-        self.wait = WebDriverWait(self.driver, 2)
+        self.wait = WebDriverWait(self.driver, 5)
 
     def open_product_link(self, product_url):
         self.start_driver()
@@ -65,10 +65,25 @@ class Scraper:
         for product_link in product_link_list:
             self.start_driver()
             self.driver.get(product_link)
-            product_name = self.driver.find_element(By.CSS_SELECTOR, 'span#productTitle').text
-            product_price_whole = self.driver.find_element(By.CSS_SELECTOR, 'span.a-price-whole').text
-            product_price_fraction = self.driver.find_element(By.CSS_SELECTOR, 'span.a-price-fraction').text
-            product_price = product_price_whole.replace(',', '') + '.' + product_price_fraction
+
+            try:
+                product_name = self.driver.find_element(By.CSS_SELECTOR, 'span#productTitle').text
+            except NoSuchElementException:
+                # In case Amazon prompts for a 'Continue' button before
+                # showing the product link
+                button = self.driver.find_element(By.CSS_SELECTOR,'button.a-button-text')
+                button.click()
+
+                self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'span#productTitle')))
+
+                product_name = self.driver.find_element(By.CSS_SELECTOR, 'span#productTitle').text
+                product_price_whole = self.driver.find_element(By.CSS_SELECTOR, 'span.a-price-whole').text
+                product_price_fraction = self.driver.find_element(By.CSS_SELECTOR, 'span.a-price-fraction').text
+                product_price = product_price_whole.replace(',', '') + '.' + product_price_fraction
+            else:
+                product_price_whole = self.driver.find_element(By.CSS_SELECTOR, 'span.a-price-whole').text
+                product_price_fraction = self.driver.find_element(By.CSS_SELECTOR, 'span.a-price-fraction').text
+                product_price = product_price_whole.replace(',', '') + '.' + product_price_fraction
 
             # Get time now
             local = arrow.utcnow().to('Asia/Manila')
@@ -78,7 +93,6 @@ class Scraper:
             db.save_price(product_name, product_link, product_price, timestamp)
 
             self.driver.quit()
-
 
     @staticmethod
     def load_all_tracked_products():
