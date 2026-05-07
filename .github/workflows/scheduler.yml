@@ -2,7 +2,7 @@ name: Price Tracker Scheduler
 
 on:
   schedule:
-    - cron: "2 3 * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
