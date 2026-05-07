@@ -18,7 +18,7 @@ Features and structure may change over time.
     <li>Automates browser interaction</li>
     <li>Scrapes product price data from the Amazon product page</li>
   </ul>
-  <li><strong>Database: SQLite</strong></li>
+  <li><strong>Database: PostgreSQL via Supabase</strong></li>
   <ul>
     <li>Stores monitored product and price information for visualization</li>
   </ul>
