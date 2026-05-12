@@ -2,8 +2,7 @@ name: Price Tracker Scheduler
 
 on:
   schedule:
-    - cron: "20 13 * * *"
-      timezone: "Asia/Manila"
+    - cron: "50 11 * * *"
   workflow_dispatch:
 
 jobs:
